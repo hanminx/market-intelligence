@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Watchlist · Market Intelligence</title>
+    <style>
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        padding: 1rem;
+        background: #f3f6fa;
+        color: #172b42;
+        font-family: system-ui, sans-serif;
+        line-height: 1.5;
+      }
+      main { max-width: 40rem; margin: 0 auto; }
+      nav a { display: inline-block; padding: 0.75rem 0; color: #1755a0; }
+      h1 { font-size: 2rem; margin: 1rem 0; }
+      h2 { font-size: 1.25rem; margin: 0 0 1rem; }
+      section {
+        background: #fff;
+        border: 1px solid #dce3eb;
+        border-radius: 1rem;
+        padding: clamp(1rem, 4vw, 2rem);
+        margin-bottom: 1rem;
+      }
+      label { display: block; font-weight: 600; margin-bottom: 0.5rem; }
+      .add-fields { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+      input, button { font: inherit; min-height: 44px; border-radius: 0.5rem; }
+      input { flex: 1 1 12rem; min-width: 0; width: 100%; border: 1px solid #8393a5; padding: 0.65rem; }
+      button { cursor: pointer; padding: 0.65rem 1rem; border: 1px solid #1755a0; background: #1755a0; color: #fff; }
+      a:focus-visible, input:focus-visible, button:focus-visible { outline: 3px solid #a65b00; outline-offset: 3px; }
+      ul { list-style: none; margin: 1.5rem 0 0; padding: 0; }
+      li { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; border-top: 1px solid #dce3eb; padding: 0.75rem 0; }
+      li span { min-width: 0; overflow-wrap: anywhere; }
+      li form { flex-shrink: 0; }
+      .remove { background: #fff; color: #912c2c; border-color: #d3aaaa; }
+      .empty { color: #526175; margin-bottom: 0; }
+      .error { background: #fff0ee; color: #912c2c; border: 1px solid #d3aaaa; border-radius: 0.5rem; padding: 1rem; overflow-wrap: anywhere; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <nav aria-label="Main navigation"><a href="/">&larr; Market Intelligence</a></nav>
+      <h1>Your watchlist</h1>
+      {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+      <section aria-labelledby="tickers-heading">
+        <h2 id="tickers-heading">Stocks</h2>
+        <form method="post" action="/watchlist/tickers">
+          <label for="symbol">Ticker symbol</label>
+          <div class="add-fields">
+            <input id="symbol" name="symbol" value="{{ symbol }}" placeholder="e.g. AAPL" required autocapitalize="characters" spellcheck="false">
+            <button type="submit">Add ticker</button>
+          </div>
+        </form>
+        {% if tickers %}
+        <ul>
+          {% for ticker in tickers %}
+          <li>
+            <span>{{ ticker.symbol }}</span>
+            <form method="post" action="/watchlist/tickers/{{ ticker.id }}/remove">
+              <button class="remove" type="submit" aria-label="Remove {{ ticker.symbol }}">Remove</button>
+            </form>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}<p class="empty">No stocks watched yet. Add your first ticker above.</p>{% endif %}
+      </section>
+      <section aria-labelledby="sectors-heading">
+        <h2 id="sectors-heading">Sectors</h2>
+        <form method="post" action="/watchlist/sectors">
+          <label for="name">Sector name</label>
+          <div class="add-fields">
+            <input id="name" name="name" value="{{ name }}" placeholder="e.g. Technology" required>
+            <button type="submit">Add sector</button>
+          </div>
+        </form>
+        {% if sectors %}
+        <ul>
+          {% for sector in sectors %}
+          <li>
+            <span>{{ sector.name }}</span>
+            <form method="post" action="/watchlist/sectors/{{ sector.id }}/remove">
+              <button class="remove" type="submit" aria-label="Remove {{ sector.name }}">Remove</button>
+            </form>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}<p class="empty">No sectors watched yet. Add your first sector above.</p>{% endif %}
+      </section>
+    </main>
+  </body>
+</html>

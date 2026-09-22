@@ -1,10 +1,22 @@
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
-app = FastAPI(title="Market Intelligence")
+from app import database
+from app.watchlist import router as watchlist_router
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    database.initialize()
+    yield
+
+
+app = FastAPI(title="Market Intelligence", lifespan=lifespan)
+app.include_router(watchlist_router)
 templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
 
 
