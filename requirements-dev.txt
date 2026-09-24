@@ -1,2 +1,2 @@
 -r requirements.txt
-httpx>=0.27,<1.0
+# unittest is built in; httpx is now also a runtime dependency for news collection.

@@ -1,4 +1,4 @@
-"""SQLite persistence and input validation for the watchlist."""
+"""Shared SQLite setup and watchlist persistence."""
 
 import sqlite3
 from contextlib import contextmanager
@@ -12,6 +12,7 @@ def connect():
     connection = sqlite3.connect(DATABASE_PATH)
     connection.row_factory = sqlite3.Row
     try:
+        connection.execute("PRAGMA foreign_keys = ON")
         with connection:
             yield connection
     finally:
@@ -36,6 +37,31 @@ def initialize() -> None:
                     CHECK (length(trim(name)) > 0),
                 created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
             )
+        """)
+        connection.execute("""
+            CREATE TABLE IF NOT EXISTS news_articles (
+                id INTEGER PRIMARY KEY,
+                provider TEXT NOT NULL,
+                provider_article_id TEXT NOT NULL,
+                title TEXT NOT NULL,
+                summary TEXT NOT NULL DEFAULT '',
+                url TEXT NOT NULL,
+                publisher TEXT NOT NULL,
+                published_at TEXT NOT NULL,
+                fetched_at TEXT NOT NULL,
+                UNIQUE (provider, provider_article_id)
+            )
+        """)
+        connection.execute("""
+            CREATE TABLE IF NOT EXISTS news_article_tickers (
+                article_id INTEGER NOT NULL REFERENCES news_articles(id) ON DELETE CASCADE,
+                symbol TEXT NOT NULL,
+                PRIMARY KEY (article_id, symbol)
+            )
+        """)
+        connection.execute("""
+            CREATE INDEX IF NOT EXISTS news_articles_published
+            ON news_articles (published_at DESC, id DESC)
         """)
 
 

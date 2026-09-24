@@ -6,6 +6,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
 from app import database
+from app.news.routes import router as news_router
 from app.watchlist import router as watchlist_router
 
 
@@ -17,6 +18,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Market Intelligence", lifespan=lifespan)
 app.include_router(watchlist_router)
+app.include_router(news_router)
 templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
 
 

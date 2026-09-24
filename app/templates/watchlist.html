@@ -42,7 +42,9 @@
   </head>
   <body>
     <main>
-      <nav aria-label="Main navigation"><a href="/">&larr; Market Intelligence</a></nav>
+      <nav aria-label="Main navigation">
+        <a href="/">&larr; Market Intelligence</a> · <a href="/news">News</a>
+      </nav>
       <h1>Your watchlist</h1>
       {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
       <section aria-labelledby="tickers-heading">
