@@ -45,17 +45,22 @@ def list_articles(limit: int = 50, offset: int = 0) -> list[dict]:
             SELECT * FROM news_articles
             ORDER BY published_at DESC, id DESC LIMIT ? OFFSET ?
         """, (limit, offset)).fetchall()]
-        if not articles:
-            return []
-        by_id = {article["id"]: article for article in articles}
-        for article in articles:
-            article["tickers"] = []
-        placeholders = ",".join("?" for _ in articles)
-        rows = connection.execute(
-            f"SELECT article_id, symbol FROM news_article_tickers "
-            f"WHERE article_id IN ({placeholders}) ORDER BY symbol",
-            tuple(by_id),
-        ).fetchall()
-        for row in rows:
-            by_id[row["article_id"]]["tickers"].append(row["symbol"])
-        return articles
+        return attach_tickers(connection, articles)
+
+
+def attach_tickers(connection, articles: list[dict]) -> list[dict]:
+    """Load source ticker associations in one query for an article page."""
+    if not articles:
+        return []
+    by_id = {article["id"]: article for article in articles}
+    for article in articles:
+        article["tickers"] = []
+    placeholders = ",".join("?" for _ in articles)
+    rows = connection.execute(
+        f"SELECT article_id, symbol FROM news_article_tickers "
+        f"WHERE article_id IN ({placeholders}) ORDER BY symbol",
+        tuple(by_id),
+    ).fetchall()
+    for row in rows:
+        by_id[row["article_id"]]["tickers"].append(row["symbol"])
+    return articles

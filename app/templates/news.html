@@ -20,6 +20,11 @@
       .tickers { display: flex; flex-wrap: wrap; gap: 0.4rem; padding: 0; margin: 0.75rem 0; list-style: none; }
       .tickers li { background: #eaf0f8; border-radius: 0.3rem; padding: 0.15rem 0.5rem; font-size: 0.85rem; font-weight: 600; max-width: 100%; }
       .summary { white-space: pre-line; }
+      .analysis { border-left: 3px solid #1755a0; padding: 0.5rem 1rem; margin: 1rem 0; background: #f3f6fa; }
+      .analysis p { margin: 0.5rem 0; }
+      details { margin: 0.5rem 0; }
+      summary { cursor: pointer; min-height: 44px; padding: 0.5rem 0; }
+      .filters a[aria-current="page"] { font-weight: 700; text-decoration-thickness: 3px; }
     </style>
   </head>
   <body>
@@ -30,6 +35,10 @@
       </nav>
       <h1>News</h1>
       <p class="intro">Collected articles, newest first. Publication times are in UTC.</p>
+      <nav class="filters" aria-label="News filters">
+        <a href="/news" {% if view == 'all' %}aria-current="page"{% endif %}>All articles</a>
+        <a href="/news?view=surfaced" {% if view == 'surfaced' %}aria-current="page"{% endif %}>Surfaced / important</a>
+      </nav>
       {% for article in articles %}
       <article>
         <p class="meta">
@@ -42,13 +51,39 @@
         <h2>{{ article.title }}</h2>
         <p class="summary">{{ article.summary or "No summary provided by the publisher." }}</p>
         <a class="source" href="{{ article.url }}" rel="noopener noreferrer">Read original article <span aria-hidden="true">&rarr;</span></a>
+        {% if article.analysis %}
+        <div class="analysis">
+          <p><strong>AI importance: {{ article.analysis.importance_score }}/100</strong>
+            · {{ article.analysis.content_type | replace('_', ' ') }}
+            · {{ article.analysis.impact_direction }}</p>
+          <p><strong>Why it matters:</strong> {{ article.analysis.why_it_matters }}</p>
+          <p class="meta">{{ 'Surfaced' if article.analysis.should_surface else 'Not surfaced' }}
+            · Confidence: {{ article.analysis.confidence_score }}/100</p>
+          <details>
+            <summary>Analysis details</summary>
+            <p>AI primary tickers: {{ article.analysis.primary_tickers | join(', ') or 'None identified' }}</p>
+            <p>Watchlist relevance: {{ article.analysis.ticker_relevance_score }}/100
+              · Novelty: {{ article.analysis.novelty_score }}/100
+              · Fundamental impact: {{ article.analysis.fundamental_impact_score }}/100
+              · Market impact: {{ article.analysis.market_impact_score }}/100</p>
+            <p>Time horizon: {{ article.analysis.time_horizon }}
+              · Opinion: {{ 'Yes' if article.analysis.is_opinion else 'No' }}</p>
+            <p class="meta">Model: {{ article.analysis.model }}<br>
+              Prompt: {{ article.analysis.prompt_version }}<br>
+              Scored: {{ article.analysis.scored_at }}<br>
+              Based on the stored headline, summary, and watchlist at scoring time.</p>
+          </details>
+        </div>
+        {% else %}
+        <p class="meta">Not scored for the current model/prompt version.</p>
+        {% endif %}
       </article>
       {% else %}
-      <p class="empty">{% if page == 1 %}No news collected yet. Add stocks to your <a href="/watchlist">watchlist</a>, then run the manual collector.{% else %}No more articles on this page.{% endif %}</p>
+      <p class="empty">{% if view == 'surfaced' %}No surfaced articles on this page for the current scoring version. <a href="/news">View all source articles</a>.{% elif page == 1 %}No news collected yet. Add stocks to your <a href="/watchlist">watchlist</a>, then run the manual collector.{% else %}No more articles on this page.{% endif %}</p>
       {% endfor %}
       <nav aria-label="News pages">
-        {% if page > 1 %}<a href="/news?page={{ page - 1 }}">&larr; Newer articles</a>{% endif %}
-        {% if has_next %}<a href="/news?page={{ page + 1 }}">Older articles &rarr;</a>{% endif %}
+        {% if page > 1 %}<a href="/news?page={{ page - 1 }}{% if view == 'surfaced' %}&amp;view=surfaced{% endif %}">&larr; Newer articles</a>{% endif %}
+        {% if has_next %}<a href="/news?page={{ page + 1 }}{% if view == 'surfaced' %}&amp;view=surfaced{% endif %}">Older articles &rarr;</a>{% endif %}
       </nav>
     </main>
   </body>

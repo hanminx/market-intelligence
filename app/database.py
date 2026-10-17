@@ -63,6 +63,43 @@ def initialize() -> None:
             CREATE INDEX IF NOT EXISTS news_articles_published
             ON news_articles (published_at DESC, id DESC)
         """)
+        connection.execute("""
+            CREATE TABLE IF NOT EXISTS article_analyses (
+                id INTEGER PRIMARY KEY,
+                article_id INTEGER NOT NULL REFERENCES news_articles(id) ON DELETE CASCADE,
+                primary_tickers TEXT NOT NULL CHECK (json_valid(primary_tickers) AND json_type(primary_tickers) = 'array'),
+                ticker_relevance_score INTEGER NOT NULL CHECK (ticker_relevance_score BETWEEN 0 AND 100),
+                content_type TEXT NOT NULL CHECK (content_type IN (
+                    'company_event', 'sector_event', 'macro', 'analyst', 'opinion',
+                    'market_recap', 'evergreen', 'promotional', 'other')),
+                novelty_score INTEGER NOT NULL CHECK (novelty_score BETWEEN 0 AND 100),
+                fundamental_impact_score INTEGER NOT NULL CHECK (fundamental_impact_score BETWEEN 0 AND 100),
+                market_impact_score INTEGER NOT NULL CHECK (market_impact_score BETWEEN 0 AND 100),
+                importance_score INTEGER NOT NULL CHECK (importance_score BETWEEN 0 AND 100),
+                impact_direction TEXT NOT NULL CHECK (impact_direction IN ('positive', 'negative', 'mixed', 'neutral', 'unclear')),
+                time_horizon TEXT NOT NULL CHECK (time_horizon IN ('immediate', 'short', 'medium', 'long')),
+                is_opinion INTEGER NOT NULL CHECK (is_opinion IN (0, 1)),
+                should_surface INTEGER NOT NULL CHECK (should_surface IN (0, 1)),
+                why_it_matters TEXT NOT NULL,
+                confidence_score INTEGER NOT NULL CHECK (confidence_score BETWEEN 0 AND 100),
+                provider TEXT NOT NULL,
+                model TEXT NOT NULL,
+                prompt_version TEXT NOT NULL,
+                scored_at TEXT NOT NULL,
+                input_json TEXT NOT NULL,
+                input_sha256 TEXT NOT NULL,
+                prompt_text TEXT NOT NULL,
+                schema_json TEXT NOT NULL,
+                request_settings_json TEXT NOT NULL,
+                response_model TEXT NOT NULL,
+                response_id TEXT,
+                UNIQUE (article_id, model, prompt_version)
+            )
+        """)
+        connection.execute("""
+            CREATE INDEX IF NOT EXISTS article_analyses_config_surface
+            ON article_analyses (model, prompt_version, should_surface, article_id)
+        """)
 
 
 def list_tickers() -> list[sqlite3.Row]:

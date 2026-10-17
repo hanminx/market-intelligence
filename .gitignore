@@ -230,3 +230,6 @@ local_data/
 # Local environment variants (keep the example tracked)
 .env.*
 !.env.example
+
+# macOS generated metadata
+.DS_Store
